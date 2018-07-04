@@ -1,11 +1,13 @@
 <?php
 
-class Prevent_Browser_Caching_Admin_Settings {
+class Prevent_Browser_Caching_Admin_Settings
+{
 
     /**
      * Prevent_Browser_Caching_Admin_Settings Constructor.
      */
-    public function __construct() {
+    public function __construct()
+    {
         add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
         add_action( 'wp_ajax_pbc_update_clear_cache_time', array( $this, 'update_clear_cache_time' ) );
@@ -14,7 +16,8 @@ class Prevent_Browser_Caching_Admin_Settings {
     /**
      * Add options page.
      */
-    public function add_plugin_page() {
+    public function add_plugin_page()
+    {
         add_options_page(
             __( 'Prevent Browser Caching', 'prevent-browser-caching' ),
             __( 'Prevent Browser Caching', 'prevent-browser-caching' ),
@@ -27,7 +30,8 @@ class Prevent_Browser_Caching_Admin_Settings {
     /**
      * Options page callback.
      */
-    public function create_admin_page() {
+    public function create_admin_page()
+    {
         // Set class property
 
         ?>
@@ -56,7 +60,8 @@ class Prevent_Browser_Caching_Admin_Settings {
     /**
      * Register and add settings.
      */
-    public function page_init() {
+    public function page_init()
+    {
         register_setting(
             'prevent_browser_caching_options_group', // Option group
             'prevent_browser_caching_options', // Option name
@@ -92,14 +97,16 @@ class Prevent_Browser_Caching_Admin_Settings {
      * @param $input
      * @return mixed
      */
-    public function sanitize( $input ) {
+    public function sanitize( $input )
+    {
         return Prevent_Browser_Caching::instance()->filter_options( $input );
     }
 
     /**
-     * Get the settings option array and print one of its values.
+     * Displays options to clear cache automatically.
      */
-    public function clear_cache_automatically_callback() {
+    public function clear_cache_automatically_callback()
+    {
         $options = Prevent_Browser_Caching::instance()->get_options();
         $clear_cache_automatically = $options['clear_cache_automatically'];
         $clear_cache_automatically_minutes = $options['clear_cache_automatically_minutes'];
@@ -121,14 +128,25 @@ class Prevent_Browser_Caching_Admin_Settings {
         <?php
     }
 
-    public function clear_cache_manually_callback() {
+    /**
+     * Displays options to clear cache manually.
+     */
+    public function clear_cache_manually_callback()
+    {
+        $options = Prevent_Browser_Caching::instance()->get_options();
+        $show_on_toolbar = $options['show_on_toolbar'];
         ?>
 
-        <button class="button" onclick="pbc_update_clear_cache_time(this)">Update now</button>
+        <label>
+            <input type="checkbox" name="prevent_browser_caching_options[show_on_toolbar]" value="1"<?php echo $show_on_toolbar ? ' checked' : ''; ?> />
+            <?php _e( 'Show "Update CSS/JS" button on the toolbar', 'prevent-browser-caching' ); ?>
+        </label><br><br>
+
+        <button class="button" onclick="pbc_update_clear_cache_time(this)"><?php _e( 'Update CSS and JS files now', 'prevent-browser-caching' ); ?></button>
 
         <script>
-            function pbc_close_notice( element ) {
-                jQuery( element ).parents('.pbc-notice').fadeOut('fast');
+            function pbc_close_notice(element) {
+                jQuery(element).parents('.pbc-notice').fadeOut('fast');
             }
 
             function pbc_update_clear_cache_time( element ) {
@@ -141,9 +159,9 @@ class Prevent_Browser_Caching_Admin_Settings {
                     nonce: '<?php echo wp_create_nonce( 'pbc_update_clear_cache_time' ) ?>'
                 };
 
-                update_button.attr( 'disabled', true );
-                jQuery.post( ajax_url, data, function( response ) {
-                    update_button.attr( 'disabled', false );
+                update_button.attr('disabled', true);
+                jQuery.post(ajax_url, data, function() {
+                    update_button.attr('disabled', false );
                     jQuery('.pbc-notice-update-caching-time').hide().addClass('is-dismissible').fadeIn('fast');
                 });
             }
@@ -152,12 +170,16 @@ class Prevent_Browser_Caching_Admin_Settings {
         <?php
     }
 
-    public function update_clear_cache_time() {
+    /**
+     * Ajax actions to clear cache manually.
+     */
+    public function update_clear_cache_time()
+    {
         check_ajax_referer( 'pbc_update_clear_cache_time', 'nonce' );
 
-        update_option( 'prevent_browser_caching_clear_cache_time', time() );
+        update_option( 'prevent_browser_caching_clear_cache_time', Prevent_Browser_Caching::instance()->get_time_code() );
 
-        wp_die();
+        exit;
     }
 
 }
